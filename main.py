@@ -20,13 +20,25 @@ print('Select reclist')
 lists = os.listdir("settings")
 for i, reclist in enumerate(lists):
     print(str(i+1) + ". " + reclist[:-5])
-selected_list = lists[int(input(": ")) - 1]
+list_index = 0
+while not (list_index <= len(lists) and list_index > 0):
+    list_index = int(input(": "))
+selected_list = lists[list_index - 1]
 
 settings = {}
 with open("settings\\" + selected_list) as file:
     settings = json.loads(file.read())
 
-overlap = int(input('Preferred vowel overlap (msec): '))
+print('Specify recording tempo or vowel overlap value?\n1. Tempo\n2. Overlap')
+ovl_choice = 0
+while (not (ovl_choice == 1) and not (ovl_choice == 2)):
+    ovl_choice = int(input(": "))
+overlap = 0
+if (ovl_choice == 1):
+    overlap = int(10000 / int(input('Recording tempo (bpm): ')))
+    print(f'Calculated overlap: {overlap}')
+elif (ovl_choice == 2):
+    overlap = int(input('Preferred vowel overlap (msec): '))
 
 labels = [os.path.join(droppedFolder, file) for file in os.listdir(droppedFolder)]
 labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
@@ -34,74 +46,39 @@ labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
 csv.register_dialect('tsv', delimiter='\t')
 for file in labels:
     filename = Path(file).stem
-    file_data = {}
+    print(f'Parsing line: {filename}')
+    phonemes = []
     with open(file, mode='r') as csv_file:
         file_data = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
         file_data = list(file_data)
 
-    for line in file_data:
-        line['start'] = int(float(line['start']) * 1000)
-        line['end'] = int(float(line['end']) * 1000)
+        marker_index = 0
+        while marker_index < len(file_data):
+            marker = file_data[marker_index]
+            if marker['text'] == 'start':
+                phonemes.append({"text": "start"})
+            elif marker['text'] == 'end':
+                phonemes.append({"text": "end"})
+            else:
+                if marker_index + 1 >= len(file_data):
+                    print('Missing end marker.')
+                    input('Press any key to close.')
+                    exit()
 
-        text = line['text']
-        if text in settings['consonants']:
-            line['type'] = 'consonant'
-        elif line['text'][:-1] in settings['consonants']:
-            if text[-1] == '1':
-                line['type'] = 'consonant1'
-            elif text[-1] == '2':
-                line['type'] = 'consonant2'
-            else:
-                line['type'] = 'none'
-        elif text in settings['vowels']:
-            line['type'] = 'vowel'
-        else:
-            line['type'] = 'none'
+                next = file_data[marker_index + 1]
+                if next['text'] == 'stretch':
+                    phonemes.append({
+                        "text": marker["text"],
+                        "start": int(float(marker["start"]) * 1000),
+                        "stretch start": int(float(next["start"]) * 1000),
+                        "stretch end": int(float(next["end"]) * 1000)
+                    })
+                    marker_index = marker_index + 1
+                else:
+                    print(f'Phoneme lacks stretch marker: {marker["text"]}')
+                    input('Press any key to close.')
+                    exit()
+            marker_index = marker_index + 1
 
-    for current, next in zip(file_data, file_data[1:]):
-        if current['type'] == 'vowel':
-            offset = next['start'] - overlap * 2 if next['start'] - current['end'] < overlap else current['end'] - overlap
-            consonant = next['start'] - offset + 10
-            preutt = overlap * 2 if next['start'] - current['end'] < overlap else next['start'] - offset
-            if next['type'] == 'vowel':
-                print(f'{filename}.wav={current["text"]} {next["text"]},{offset},{consonant},cutoff,{preutt},{overlap}')
-            elif next['type'] == 'consonant':
-                print(f'{filename}.wav={current["text"]} {next["text"]},{offset},{consonant},cutoff,{preutt},{overlap}')
-            elif next['type'] == 'consonant1':
-                print(f'{filename}.wav={current["text"]} {next["text"][:-1]},{offset},{consonant},cutoff,{preutt},{overlap}')
-            elif next['type'] == 'none':
-                print(f'{filename}.wav={current["text"]} {next["text"]},{offset},{consonant},cutoff,{preutt},{overlap}')
-            else:
-                print('Invalid labels for split consonant:', current['text'], next['text'])
-        elif current['type'] == 'consonant':
-            if next['type'] == 'vowel':
-                print('CV', current['text'], next['text'])
-            elif next['type'] == 'consonant' or next['type'] == 'consonant1':
-                print('CC', current['text'], next['text'])
-            elif next['type'] == 'none':
-                print('C-', current['text'], next['text'])
-            else:
-                print('Invalid labels for split consonant:', current['text'], next['text'])
-        elif current['type'] == 'consonant1':
-            if next['type'] == 'consonant2':
-                print('C', current['text'], next['text'])
-            else:
-                print('Invalid labels for split consonant:', current['text'], next['text'])
-        elif current['type'] == 'consonant2':
-            if next['type'] == 'vowel':
-                print('CV', current['text'], next['text'])
-            elif next['type'] == 'consonant' or next['type'] == 'consonant1':
-                print('CC', current['text'], next['text'])
-            elif next['type'] == 'none':
-                print('C-', current['text'], next['text'])
-            else:
-                print('Invalid labels for split consonant:', current['text'], next['text'])
-        else:
-            if next['type'] == 'vowel':
-                print('-V', current['text'], next['text'])
-            elif next['type'] == 'consonant' or next['type'] == 'consonant1':
-                print('-C', current['text'], next['text'])
-            elif next['type'] == 'consonant2':
-                print('Invalid labels for split consonant:', current['text'], next['text'])
-            else:
-                print('Invalid labels for silence:', current['text'], next['text'])
+    for current, next in zip(phonemes, phonemes[1:]):
+        print(f'{current["text"]} {next["text"]}')
