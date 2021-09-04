@@ -138,12 +138,12 @@ for file in labels:
                     alias = current['text'] + " " + next ['text']
                 fixed = next['stretch start'] - offset
                 cutoff = 0 - (next['stretch end'] - offset)
-                if current['stretch end'] - offset < int(preutterance/2):
-                    # stop cons
-                    adjusted_overlap = current['stretch end'] - offset
-                else:
-                    # stretch cons
-                    adjusted_overlap = int(preutterance/2)
+            if current['stretch end'] - offset < int(preutterance/2):
+                # stop cons
+                adjusted_overlap = current['stretch end'] - offset
+            else:
+                # stretch cons
+                adjusted_overlap = int(preutterance/2)
         
         oto_lines.append(f'{filename}.wav={alias},{offset},{fixed},{cutoff},{preutterance},{adjusted_overlap}\n')
 
