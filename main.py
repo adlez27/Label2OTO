@@ -30,7 +30,25 @@ labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
 
 csv.register_dialect('tsv', delimiter='\t')
 for file in labels:
+    file_data = {}
     with open(file, mode='r') as csv_file:
-        csv_reader = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
-        for row in csv_reader:
-            print(f'Start time: {row["start"]}\nEnd time: {row["end"]}\nLabel text: {row["text"]}')
+        file_data = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
+        for line in file_data:
+            line['start'] = float(line['start']) * 1000
+            line['end'] = float(line['end']) * 1000
+
+            text = line['text']
+            if text in settings['consonants']:
+                line['type'] = 'consonant'
+            elif line['text'][:-1] in settings['consonants']:
+                if text[-1] == '1':
+                    line['type'] = 'consonant1'
+                elif text[-1] == '2':
+                    line['type'] = 'consonant2'
+                else:
+                    line['type'] = 'none'
+            elif text in settings['vowels']:
+                line['type'] = 'vowel'
+            else:
+                line['type'] = 'none'
+            print(line)
