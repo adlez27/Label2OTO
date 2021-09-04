@@ -1,6 +1,7 @@
-from genericpath import isdir
 import sys
 import os
+from genericpath import isdir
+from pathlib import Path
 import json
 import csv
 
@@ -32,6 +33,7 @@ labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
 
 csv.register_dialect('tsv', delimiter='\t')
 for file in labels:
+    filename = Path(file).stem
     file_data = {}
     with open(file, mode='r') as csv_file:
         file_data = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
@@ -58,14 +60,19 @@ for file in labels:
 
     for current, next in zip(file_data, file_data[1:]):
         if current['type'] == 'vowel':
+            offset = next['start'] - overlap * 2 if next['start'] - current['end'] < overlap else current['end'] - overlap
+            consonant = next['start'] - offset + 10
+            preutt = overlap * 2 if next['start'] - current['end'] < overlap else next['start'] - offset
             if next['type'] == 'vowel':
-                print('VV', current['text'], next['text'])
-            elif next['type'] == 'consonant' or next['type'] == 'consonant1':
-                print('VC', current['text'], next['text'])
+                print(f'{filename}.wav={current["text"]} {next["text"]},{offset},{consonant},cutoff,{preutt},{overlap}')
+            elif next['type'] == 'consonant':
+                print(f'{filename}.wav={current["text"]} {next["text"]},{offset},{consonant},cutoff,{preutt},{overlap}')
+            elif next['type'] == 'consonant1':
+                print(f'{filename}.wav={current["text"]} {next["text"][:-1]},{offset},{consonant},cutoff,{preutt},{overlap}')
             elif next['type'] == 'none':
-                print('V-', current['text'], next['text'])
+                print(f'{filename}.wav={current["text"]} {next["text"]},{offset},{consonant},cutoff,{preutt},{overlap}')
             else:
-                print('Invalid labels for split consonant:', current['text'], next['text']) # checked
+                print('Invalid labels for split consonant:', current['text'], next['text'])
         elif current['type'] == 'consonant':
             if next['type'] == 'vowel':
                 print('CV', current['text'], next['text'])
@@ -74,12 +81,12 @@ for file in labels:
             elif next['type'] == 'none':
                 print('C-', current['text'], next['text'])
             else:
-                print('Invalid labels for split consonant:', current['text'], next['text']) # checked
+                print('Invalid labels for split consonant:', current['text'], next['text'])
         elif current['type'] == 'consonant1':
             if next['type'] == 'consonant2':
                 print('C', current['text'], next['text'])
             else:
-                print('Invalid labels for split consonant:', current['text'], next['text']) # checked
+                print('Invalid labels for split consonant:', current['text'], next['text'])
         elif current['type'] == 'consonant2':
             if next['type'] == 'vowel':
                 print('CV', current['text'], next['text'])
@@ -88,13 +95,13 @@ for file in labels:
             elif next['type'] == 'none':
                 print('C-', current['text'], next['text'])
             else:
-                print('Invalid labels for split consonant:', current['text'], next['text']) # checked
+                print('Invalid labels for split consonant:', current['text'], next['text'])
         else:
             if next['type'] == 'vowel':
                 print('-V', current['text'], next['text'])
             elif next['type'] == 'consonant' or next['type'] == 'consonant1':
                 print('-C', current['text'], next['text'])
             elif next['type'] == 'consonant2':
-                print('Invalid labels for split consonant:', current['text'], next['text']) # checked
+                print('Invalid labels for split consonant:', current['text'], next['text'])
             else:
-                print('Invalid labels for silence:', current['text'], next['text']) # checked
+                print('Invalid labels for silence:', current['text'], next['text'])
