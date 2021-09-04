@@ -107,11 +107,11 @@ for file in labels:
             if next['start'] - current['stretch start'] < overlap * 2:
                 preutterance = next['start'] - current['stretch start']
                 adjusted_overlap = int(preutterance/2)
+                offset = current['stretch start']
             else:
                 preutterance = overlap * 2
                 adjusted_overlap = overlap
-            
-            offset = current['stretch end'] - adjusted_overlap
+                offset = next['start'] - preutterance
 
             if next['text'] == 'end':
                 # V-
@@ -136,7 +136,7 @@ for file in labels:
                 elif next['text'] in settings['consonants']:
                     # CC
                     alias = current['text'] + " " + next ['text']
-                fixed = next['stretch start']
+                fixed = next['stretch start'] - offset
                 cutoff = 0 - (next['stretch end'] - offset)
                 if current['stretch end'] - offset < int(preutterance/2):
                     # stop cons
