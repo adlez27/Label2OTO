@@ -9,11 +9,11 @@ try:
     droppedFolder = sys.argv[1]
     if (not os.path.isdir(droppedFolder)):
         print("Please drag and drop a folder onto main.py.")
-        input("Press any key to close.")
+        input("Press enter to close.")
         exit()
 except IndexError:
     print("Please drag and drop a folder onto main.py.")
-    input("Press any key to close.")
+    input("Press enter to close.")
     exit()
 
 print('Select reclist')
@@ -66,7 +66,7 @@ for file in labels:
             elif marker['text'] in settings['vowels'] or marker['text'] in settings['consonants']:
                 if marker_index + 1 >= len(file_data):
                     print('Missing end marker.')
-                    input('Press any key to close.')
+                    input('Press enter to close.')
                     exit()
 
                 next = file_data[marker_index + 1]
@@ -80,11 +80,11 @@ for file in labels:
                     marker_index = marker_index + 1
                 else:
                     print(f'Phoneme lacks stretch marker: {marker["text"]}')
-                    input('Press any key to close.')
+                    input('Press enter to close.')
                     exit()
             else:
                 print(f'Invalid phoneme: {marker["text"]}')
-                input('Press any key to close.')
+                input('Press enter to close.')
                 exit()
             marker_index = marker_index + 1
 
@@ -151,5 +151,5 @@ oto_file = open(os.path.join(droppedFolder, "oto.ini"), "w")
 oto_file.writelines(oto_lines)
 oto_file.close()
 print('Generated OTO has been saved.')
-input('Press any key to close.')
+input('Press enter to close.')
 exit()
