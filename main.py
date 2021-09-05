@@ -70,7 +70,7 @@ for file in labels:
                     exit()
 
                 next = file_data[marker_index + 1]
-                if next['text'] == 'stretch':
+                if next['text'] == '-':
                     phonemes.append({
                         "text": marker["text"],
                         "start": int(float(marker["start"]) * 1000),
@@ -98,10 +98,10 @@ for file in labels:
         if current['text'] == 'start':
             if next['text'] in settings['vowels']:
                 # -V
-                alias = "- " + settings['spacers']['-v'] + next['text']
+                alias = "-" + settings['spacers']['-v'] + next['text']
             elif next['text'] in settings['consonants']:
                 # -C
-                alias = "- " + settings['spacers']['-c'] + next['text']
+                alias = "-" + settings['spacers']['-c'] + next['text']
             offset = next['start'] - 10
             fixed = next['stretch start'] - next['start'] + 10
             cutoff = 0 - (next['stretch end'] - next['start'] + 10)
@@ -153,7 +153,6 @@ for file in labels:
                 # stretch cons
                 adjusted_overlap = int(preutterance/2)
         
-        # oto_lines.append(f'{filename}.wav={alias},{offset},{fixed},{cutoff},{preutterance},{adjusted_overlap}\n')
         oto_lines.append({
             "filename": filename,
             "alias": alias,
@@ -163,6 +162,26 @@ for file in labels:
             "preutterance": preutterance,
             "overlap": adjusted_overlap
         })
+
+print('Number duplicate aliases? (y/n)')
+num_dupes_choice = 0
+while (not (num_dupes_choice == 'y') and not (num_dupes_choice == 'n')):
+    num_dupes_choice = input(": ")
+if (num_dupes_choice == 'y'):
+    print('Maximum duplicates (0 to delete all, -1 to keep all)')
+    max_dupes = int(input(': '))
+
+    alias_count = {}
+    new_oto_lines = []
+    for line in oto_lines:
+        if line['alias'] not in alias_count:
+            alias_count[f'{line["alias"]}'] = 0
+            new_oto_lines.append(line)
+        elif line['alias'] in alias_count and (max_dupes == -1 or alias_count[f'{line["alias"]}'] < max_dupes):
+            alias_count[f'{line["alias"]}'] += 1
+            line['alias'] += str(alias_count[f'{line["alias"]}'])
+            new_oto_lines.append(line)
+    oto_lines = new_oto_lines
 
 oto_file = open(os.path.join(droppedFolder, "oto.ini"), "w")
 oto_lines = [f'{line["filename"]}.wav={line["alias"]},{line["offset"]},{line["fixed"]},{line["cutoff"]},{line["preutterance"]},{line["overlap"]}\n' for line in oto_lines]
