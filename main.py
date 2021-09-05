@@ -4,6 +4,7 @@ from genericpath import isdir
 from pathlib import Path
 import json
 import csv
+import re
 
 try:
     droppedFolder = sys.argv[1]
@@ -26,7 +27,7 @@ while not (list_index <= len(lists) and list_index > 0):
 selected_list = lists[list_index - 1]
 
 settings = {}
-with open("settings\\" + selected_list) as file:
+with open("settings\\" + selected_list, encoding='utf-8') as file:
     settings = json.loads(file.read())
 
 print('Specify recording tempo or vowel overlap value?\n1. Tempo\n2. Overlap')
@@ -163,12 +164,28 @@ for file in labels:
             "overlap": adjusted_overlap
         })
 
-print('Number duplicate aliases? (y/n)')
+new_oto_lines = []
+for line in oto_lines:
+    keep = True
+    for find in settings['delete']:
+        if re.search(find, line['alias']):
+            keep = False
+            break
+    if keep:
+        new_oto_lines.append(line)
+
+for line in new_oto_lines:
+    for find, replace in settings['replace'].items():
+        line['alias'] = re.sub(find,replace,line['alias'])
+
+oto_lines = new_oto_lines
+
+print('Handle duplicate aliases? (y/n)')
 num_dupes_choice = 0
 while (not (num_dupes_choice == 'y') and not (num_dupes_choice == 'n')):
     num_dupes_choice = input(": ")
 if (num_dupes_choice == 'y'):
-    print('Maximum duplicates (0 to delete all, -1 to keep all)')
+    print('Maximum number of duplicates (0 to delete all, -1 to keep all)')
     max_dupes = int(input(': '))
 
     alias_count = {}
