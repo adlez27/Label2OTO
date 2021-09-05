@@ -153,9 +153,19 @@ for file in labels:
                 # stretch cons
                 adjusted_overlap = int(preutterance/2)
         
-        oto_lines.append(f'{filename}.wav={alias},{offset},{fixed},{cutoff},{preutterance},{adjusted_overlap}\n')
+        # oto_lines.append(f'{filename}.wav={alias},{offset},{fixed},{cutoff},{preutterance},{adjusted_overlap}\n')
+        oto_lines.append({
+            "filename": filename,
+            "alias": alias,
+            "offset": offset,
+            "fixed": fixed,
+            "cutoff": cutoff,
+            "preutterance": preutterance,
+            "overlap": adjusted_overlap
+        })
 
 oto_file = open(os.path.join(droppedFolder, "oto.ini"), "w")
+oto_lines = [f'{line["filename"]}.wav={line["alias"]},{line["offset"]},{line["fixed"]},{line["cutoff"]},{line["preutterance"]},{line["overlap"]}\n' for line in oto_lines]
 oto_file.writelines(oto_lines)
 oto_file.close()
 print('Generated OTO has been saved.')
