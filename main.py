@@ -96,8 +96,12 @@ for file in labels:
         preutterance = 0
         adjusted_overlap = 0
         if current['text'] == 'start':
-            # -X
-            alias = "- " + next['text']
+            if next['text'] in settings['vowels']:
+                # -V
+                alias = "- " + settings['spacers']['-v'] + next['text']
+            elif next['text'] in settings['consonants']:
+                # -C
+                alias = "- " + settings['spacers']['-c'] + next['text']
             offset = next['start'] - 10
             fixed = next['stretch start'] - next['start'] + 10
             cutoff = 0 - (next['stretch end'] - next['start'] + 10)
@@ -115,11 +119,15 @@ for file in labels:
 
             if next['text'] == 'end':
                 # V-
-                alias = current['text'] + " -"
+                alias = current['text'] + settings['spacers']['v-'] +  "-"
                 fixed = preutterance + 10
             else:
-                # VV and VC
-                alias = current['text'] + " " + next ['text']
+                if next['text'] in settings['vowels']:
+                    # VV
+                    alias = current['text'] + settings['spacers']['vv'] + next ['text']
+                elif next['text'] in settings['consonants']:
+                    # VC
+                    alias = current['text'] + settings['spacers']['vc'] + next['text']
                 fixed = next['stretch start'] - offset
                 cutoff = 0 - (next['stretch end'] - offset)
         elif current['text'] in settings['consonants']:
@@ -127,15 +135,15 @@ for file in labels:
             preutterance = next['start'] - offset
             if next['text'] == 'end':
                 # C-
-                alias = current['text'] + " -"
+                alias = current['text'] + settings['spacers']['c-'] + "-"
                 fixed = next['start'] - offset + 10
             else:
                 if next['text'] in settings['vowels']:
                     # CV
-                    alias = current['text'] + next['text']
+                    alias = current['text'] + settings['spacers']['cv'] + next['text']
                 elif next['text'] in settings['consonants']:
                     # CC
-                    alias = current['text'] + " " + next ['text']
+                    alias = current['text'] + settings['spacers']['cc'] + next ['text']
                 fixed = next['stretch start'] - offset
                 cutoff = 0 - (next['stretch end'] - offset)
             if current['stretch end'] - offset < int(preutterance/2):
