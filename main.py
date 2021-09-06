@@ -104,9 +104,9 @@ for file in labels:
                 # -C
                 alias = "-" + settings['spacers']['-c'] + next['text']
             offset = next['start'] - 10
-            fixed = next['stretch start'] - next['start'] + 10
-            cutoff = 0 - (next['stretch end'] - next['start'] + 10)
-            preutterance = 10
+            fixed = next['stretch start'] - next['start'] + 20
+            cutoff = 0 - (next['stretch end'] - next['start'] + 20)
+            preutterance = 20
             adjusted_overlap = 10
         elif current['text'] in settings['vowels']:
             if next['start'] - current['stretch start'] < overlap * 2:
