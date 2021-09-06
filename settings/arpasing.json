@@ -55,6 +55,6 @@
         "z",
         "zh"
     ],
-    "delete": [],
+    "delete": ["dx"],
     "replace": {}
 }

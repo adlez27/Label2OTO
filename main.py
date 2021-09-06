@@ -107,7 +107,7 @@ for file in labels:
             fixed = next['stretch start'] - next['start'] + 10
             cutoff = 0 - (next['stretch end'] - next['start'] + 10)
             preutterance = 10
-            adjusted_overlap = 0
+            adjusted_overlap = 10
         elif current['text'] in settings['vowels']:
             if next['start'] - current['stretch start'] < overlap * 2:
                 preutterance = next['start'] - current['stretch start']
