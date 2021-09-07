@@ -161,10 +161,14 @@ for file in labels:
         if current['text'] == 'start':
             if next['text'] in preset['settings']['vowels']:
                 # -V
-                alias = "-" + preset['settings']['spacers']['-v'] + next['text']
+                alias = "-" + preset['settings']['aliases']['-v']['spacer'] + next['text']
+                if not preset['settings']['aliases']['-v']['include']:
+                    continue
             elif next['text'] in preset['settings']['consonants']:
                 # -C
-                alias = "-" + preset['settings']['spacers']['-c'] + next['text']
+                alias = "-" + preset['settings']['aliases']['-c']['spacer'] + next['text']                
+                if not preset['settings']['aliases']['-c']['include']:
+                    continue
             offset = next['start'] - preset['init_preutt']
             fixed = next['stretch start'] - next['start'] + preset['init_preutt']
             cutoff = 0 - (next['stretch end'] - next['start'] + preset['init_preutt'])
@@ -182,15 +186,21 @@ for file in labels:
 
             if next['text'] == 'end':
                 # V-
-                alias = current['text'] + preset['settings']['spacers']['v-'] +  "-"
+                alias = current['text'] + preset['settings']['aliases']['v-']['spacer'] +  "-"
                 fixed = preutterance + 10
+                if not preset['settings']['aliases']['v-']['include']:
+                    continue
             else:
                 if next['text'] in preset['settings']['vowels']:
                     # VV
-                    alias = current['text'] + preset['settings']['spacers']['vv'] + next ['text']
+                    alias = current['text'] + preset['settings']['aliases']['vv']['spacer'] + next ['text']
+                    if not preset['settings']['aliases']['vv']['include']:
+                        continue
                 elif next['text'] in preset['settings']['consonants']:
                     # VC
-                    alias = current['text'] + preset['settings']['spacers']['vc'] + next['text']
+                    alias = current['text'] + preset['settings']['aliases']['vc']['spacer'] + next['text']
+                    if not preset['settings']['aliases']['vc']['include']:
+                        continue
                 fixed = next['stretch start'] - offset
                 cutoff = 0 - (next['stretch end'] - offset)
         elif current['text'] in preset['settings']['consonants']:
@@ -198,15 +208,21 @@ for file in labels:
             preutterance = next['start'] - offset
             if next['text'] == 'end':
                 # C-
-                alias = current['text'] + preset['settings']['spacers']['c-'] + "-"
-                fixed = next['start'] - offset + 10
+                alias = current['text'] + preset['settings']['aliases']['c-']['spacer'] + "-"
+                fixed = next['start'] - offset + int(preset['init_preutt'] / 2)                
+                if not preset['settings']['aliases']['c-']['include']:
+                    continue
             else:
                 if next['text'] in preset['settings']['vowels']:
                     # CV
-                    alias = current['text'] + preset['settings']['spacers']['cv'] + next['text']
+                    alias = current['text'] + preset['settings']['aliases']['cv']['spacer'] + next['text']
+                    if not preset['settings']['aliases']['cv']['include']:
+                        continue
                 elif next['text'] in preset['settings']['consonants']:
                     # CC
-                    alias = current['text'] + preset['settings']['spacers']['cc'] + next ['text']
+                    alias = current['text'] + preset['settings']['aliases']['cc']['spacer'] + next ['text']
+                    if not preset['settings']['aliases']['cc']['include']:
+                        continue
                 fixed = next['stretch start'] - offset
                 cutoff = 0 - (next['stretch end'] - offset)
             if current['stretch end'] - offset < int(preutterance/2):

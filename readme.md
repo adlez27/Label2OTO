@@ -11,7 +11,7 @@ Each wav file in the voicebank has one corresponding label file, with the same n
 
 ## Settings
 JSON files containing the settings for a given reclist. See existing files in `settings` for examples.
-- Spacers: Character used between phonemes for each alias format
+- Aliases: Which alias formats to include, and the spacer character used between phonemes
 - Consonants and vowels: Recognized phonemes, to validate labels and adjust OTO values
 - Delete: List of regex strings, to identify aliases that should be deleted from the OTO
 - Replace: Dictionary of regex find/replace for modifying aliases

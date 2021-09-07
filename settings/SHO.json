@@ -1,13 +1,37 @@
 {
-    "spacers": {
-        "-v": " ",
-        "-c": " ",
-        "vv": " ",
-        "vc": " ",
-        "cv": "",
-        "cc": " ",
-        "v-": " ",
-        "c-": " "
+    "aliases": {
+        "-v": {
+            "include": true,
+            "spacer": " "
+        },
+        "-c": {
+            "include": true,
+            "spacer": " "
+        },
+        "vv": {
+            "include": true,
+            "spacer": " "
+        },
+        "vc": {
+            "include": true,
+            "spacer": " "
+        },
+        "cv": {
+            "include": true,
+            "spacer": ""
+        },
+        "cc": {
+            "include": true,
+            "spacer": " "
+        },
+        "v-": {
+            "include": true,
+            "spacer": " "
+        },
+        "c-": {
+            "include": true,
+            "spacer": " "
+        }
     },
     "vowels": [
         "a",
