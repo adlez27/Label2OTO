@@ -49,7 +49,7 @@ oto_lines = []
 for file in labels:
     filename = Path(file).stem
     print(f'Parsing line: {filename}')
-    phonemes = []
+    phonemes = [{"text": "start"}]
     with open(file, mode='r') as csv_file:
         file_data = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
         file_data = list(file_data)
@@ -57,14 +57,9 @@ for file in labels:
         marker_index = 0
         while marker_index < len(file_data):
             marker = file_data[marker_index]
-            if marker['text'] == 'start':
-                phonemes.append({"text": "start"})
-            elif marker['text'] == 'end':
-                phonemes.append({
-                    "text": "end",
-                    "start": int(float(marker["start"])* 1000)
-                })
-            elif marker['text'] in settings['vowels'] or marker['text'] in settings['consonants']:
+            # if marker['text'] == 'start':
+            #     phonemes.append({"text": "start"})
+            if marker['text'] in settings['vowels'] or marker['text'] in settings['consonants']:
                 if marker_index + 1 >= len(file_data):
                     print('Missing end marker.')
                     input('Press enter to close.')
@@ -83,6 +78,11 @@ for file in labels:
                     print(f'Phoneme lacks stretch marker: {marker["text"]}')
                     input('Press enter to close.')
                     exit()
+            elif marker['text'] == 'end':
+                phonemes.append({
+                    "text": "end",
+                    "start": int(float(marker["start"])* 1000)
+                })
             else:
                 print(f'Invalid phoneme: {marker["text"]}')
                 input('Press enter to close.')
