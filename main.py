@@ -7,8 +7,8 @@ import csv
 import re
 
 try:
-    droppedFolder = sys.argv[1]
-    if (not os.path.isdir(droppedFolder)):
+    dropped_folder = sys.argv[1]
+    if (not os.path.isdir(dropped_folder)):
         print("Please drag and drop a folder onto main.py.")
         input("Press enter to close.")
         exit()
@@ -17,31 +17,95 @@ except IndexError:
     input("Press enter to close.")
     exit()
 
-print('Select reclist')
-lists = os.listdir("settings")
-for i, reclist in enumerate(lists):
-    print(str(i+1) + ". " + reclist[:-5])
-list_index = 0
-while not (list_index <= len(lists) and list_index > 0):
-    list_index = int(input(": "))
-selected_list = lists[list_index - 1]
+preset = {
+    "load_preset": False,
+    "settings": -1,
+    "tempo": -1,
+    "overlap": False,
+    "init_preutt": 20
+}
 
-settings = {}
-with open("settings\\" + selected_list, encoding='utf-8') as file:
-    settings = json.loads(file.read())
+def set_settings():
+    print('Select reclist')
+    lists = os.listdir("settings")
+    for i, reclist in enumerate(lists):
+        print(str(i+1) + ". " + reclist[:-5])
+    list_index = 0
+    while not (list_index <= len(lists) and list_index > 0):
+        list_index = int(input(": "))
+    selected_list = lists[list_index - 1]
 
-print('Specify recording tempo or vowel overlap value?\n1. Tempo\n2. Overlap')
-ovl_choice = 0
-while (not (ovl_choice == 1) and not (ovl_choice == 2)):
-    ovl_choice = int(input(": "))
-overlap = 0
-if (ovl_choice == 1):
-    overlap = int(10000 / int(input('Recording tempo (bpm): ')))
-    print(f'Calculated overlap: {overlap}')
-elif (ovl_choice == 2):
-    overlap = int(input('Preferred vowel overlap (msec): '))
+    with open("settings\\" + selected_list, encoding='utf-8') as file:
+        preset['settings'] = json.loads(file.read())
+    preset['load_preset'] = False
 
-labels = [os.path.join(droppedFolder, file) for file in os.listdir(droppedFolder)]
+def set_overlap():
+    print('Specify recording tempo or vowel overlap value?\n1. Tempo\n2. Overlap')
+    ovl_choice = 0
+    while (not (ovl_choice == 1) and not (ovl_choice == 2)):
+        ovl_choice = int(input(": "))
+    if (ovl_choice == 1):
+        preset["overlap"] = int(10000 / int(input('Recording tempo (bpm): ')))
+        print(f'Calculated overlap: {preset["overlap"]}')
+    elif (ovl_choice == 2):
+        preset["overlap"] = int(input('Preferred vowel overlap (msec): '))
+    preset['load_preset'] = False
+
+def set_handle_dupes(handle):
+    if not handle:
+        print('Handle duplicate aliases? (y/n)')
+        num_dupes_choice = 0
+        while (not (num_dupes_choice == 'y') and not (num_dupes_choice == 'n')):
+            num_dupes_choice = input(": ")
+        handle = True if num_dupes_choice == 'y' else False
+
+    if handle:
+        preset['handle_dupes'] = True
+        print('Maximum number of duplicates (0 to delete all, -1 to keep all)')
+        preset['max_dupes'] = int(input(': '))
+    else:
+        preset['handle_dupes'] = False
+
+    preset['load_preset'] = False
+
+try:
+    with open(os.path.join(dropped_folder, "preset.json")) as file:
+        file_preset = json.loads(file.read())
+        for key, value in file_preset.items():
+            preset[key] = value
+
+    preset['load_preset'] = True
+
+    if type(preset['settings']) is str:
+        lists = os.listdir("settings")
+        lists = [x[:-5] for x in lists]
+        if preset['settings'] in lists:
+            print('Loading from settings for', preset['settings'] + ".")
+            with open("settings\\" + preset['settings'] + ".json", encoding='utf-8') as file:
+                preset['settings'] = json.loads(file.read())
+        else:
+            print('Could not find settings for', preset['settings'] + ".")
+            set_settings()
+    elif type(preset['settings']) is dict:
+        print('Loading settings from preset file.')
+    else:
+        set_settings()
+
+    if preset['tempo'] > 0:
+        preset['overlap'] = int(10000 / preset['tempo'])
+        print(f'Calculated overlap from tempo: {preset["overlap"]}')
+    elif type(preset['overlap']) is bool:
+        set_overlap()
+
+    if 'max_dupes' not in preset:
+        if ('handle_dupes' not in preset) or preset['handle_dupes']:
+            set_handle_dupes(True)
+except IOError:
+    set_settings()
+    set_overlap()
+    set_handle_dupes()
+
+labels = [os.path.join(dropped_folder, file) for file in os.listdir(dropped_folder)]
 labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
 
 csv.register_dialect('tsv', delimiter='\t')
@@ -57,9 +121,7 @@ for file in labels:
         marker_index = 0
         while marker_index < len(file_data):
             marker = file_data[marker_index]
-            # if marker['text'] == 'start':
-            #     phonemes.append({"text": "start"})
-            if marker['text'] in settings['vowels'] or marker['text'] in settings['consonants']:
+            if marker['text'] in preset['settings']['vowels'] or marker['text'] in preset['settings']['consonants']:
                 if marker_index + 1 >= len(file_data):
                     print('Missing end marker.')
                     input('Press enter to close.')
@@ -97,54 +159,54 @@ for file in labels:
         preutterance = 0
         adjusted_overlap = 0
         if current['text'] == 'start':
-            if next['text'] in settings['vowels']:
+            if next['text'] in preset['settings']['vowels']:
                 # -V
-                alias = "-" + settings['spacers']['-v'] + next['text']
-            elif next['text'] in settings['consonants']:
+                alias = "-" + preset['settings']['spacers']['-v'] + next['text']
+            elif next['text'] in preset['settings']['consonants']:
                 # -C
-                alias = "-" + settings['spacers']['-c'] + next['text']
-            offset = next['start'] - 10
-            fixed = next['stretch start'] - next['start'] + 20
-            cutoff = 0 - (next['stretch end'] - next['start'] + 20)
-            preutterance = 20
-            adjusted_overlap = 10
-        elif current['text'] in settings['vowels']:
-            if next['start'] - current['stretch start'] < overlap * 2:
+                alias = "-" + preset['settings']['spacers']['-c'] + next['text']
+            offset = next['start'] - preset['init_preutt']
+            fixed = next['stretch start'] - next['start'] + preset['init_preutt']
+            cutoff = 0 - (next['stretch end'] - next['start'] + preset['init_preutt'])
+            preutterance = preset['init_preutt']
+            adjusted_overlap = int(preset['init_preutt'] / 2)
+        elif current['text'] in preset['settings']['vowels']:
+            if next['start'] - current['stretch start'] < preset['overlap'] * 2:
                 preutterance = next['start'] - current['stretch start']
                 adjusted_overlap = int(preutterance/2)
                 offset = current['stretch start']
             else:
-                preutterance = overlap * 2
-                adjusted_overlap = overlap
+                preutterance = preset['overlap'] * 2
+                adjusted_overlap = preset['overlap']
                 offset = next['start'] - preutterance
 
             if next['text'] == 'end':
                 # V-
-                alias = current['text'] + settings['spacers']['v-'] +  "-"
+                alias = current['text'] + preset['settings']['spacers']['v-'] +  "-"
                 fixed = preutterance + 10
             else:
-                if next['text'] in settings['vowels']:
+                if next['text'] in preset['settings']['vowels']:
                     # VV
-                    alias = current['text'] + settings['spacers']['vv'] + next ['text']
-                elif next['text'] in settings['consonants']:
+                    alias = current['text'] + preset['settings']['spacers']['vv'] + next ['text']
+                elif next['text'] in preset['settings']['consonants']:
                     # VC
-                    alias = current['text'] + settings['spacers']['vc'] + next['text']
+                    alias = current['text'] + preset['settings']['spacers']['vc'] + next['text']
                 fixed = next['stretch start'] - offset
                 cutoff = 0 - (next['stretch end'] - offset)
-        elif current['text'] in settings['consonants']:
+        elif current['text'] in preset['settings']['consonants']:
             offset = current['start']
             preutterance = next['start'] - offset
             if next['text'] == 'end':
                 # C-
-                alias = current['text'] + settings['spacers']['c-'] + "-"
+                alias = current['text'] + preset['settings']['spacers']['c-'] + "-"
                 fixed = next['start'] - offset + 10
             else:
-                if next['text'] in settings['vowels']:
+                if next['text'] in preset['settings']['vowels']:
                     # CV
-                    alias = current['text'] + settings['spacers']['cv'] + next['text']
-                elif next['text'] in settings['consonants']:
+                    alias = current['text'] + preset['settings']['spacers']['cv'] + next['text']
+                elif next['text'] in preset['settings']['consonants']:
                     # CC
-                    alias = current['text'] + settings['spacers']['cc'] + next ['text']
+                    alias = current['text'] + preset['settings']['spacers']['cc'] + next ['text']
                 fixed = next['stretch start'] - offset
                 cutoff = 0 - (next['stretch end'] - offset)
             if current['stretch end'] - offset < int(preutterance/2):
@@ -167,7 +229,7 @@ for file in labels:
 new_oto_lines = []
 for line in oto_lines:
     keep = True
-    for find in settings['delete']:
+    for find in preset['settings']['delete']:
         if re.search(find, line['alias']):
             keep = False
             break
@@ -175,35 +237,29 @@ for line in oto_lines:
         new_oto_lines.append(line)
 
 for line in new_oto_lines:
-    for find, replace in settings['replace'].items():
+    for find, replace in preset['settings']['replace'].items():
         line['alias'] = re.sub(find,replace,line['alias'])
 
 oto_lines = new_oto_lines
 
-print('Handle duplicate aliases? (y/n)')
-num_dupes_choice = 0
-while (not (num_dupes_choice == 'y') and not (num_dupes_choice == 'n')):
-    num_dupes_choice = input(": ")
-if (num_dupes_choice == 'y'):
-    print('Maximum number of duplicates (0 to delete all, -1 to keep all)')
-    max_dupes = int(input(': '))
-
+if preset['handle_dupes']:
     alias_count = {}
     new_oto_lines = []
     for line in oto_lines:
         if line['alias'] not in alias_count:
             alias_count[f'{line["alias"]}'] = 0
             new_oto_lines.append(line)
-        elif line['alias'] in alias_count and (max_dupes == -1 or alias_count[f'{line["alias"]}'] < max_dupes):
+        elif line['alias'] in alias_count and (preset['max_dupes'] == -1 or alias_count[f'{line["alias"]}'] < preset['max_dupes']):
             alias_count[f'{line["alias"]}'] += 1
             line['alias'] += str(alias_count[f'{line["alias"]}'])
             new_oto_lines.append(line)
     oto_lines = new_oto_lines
 
-oto_file = open(os.path.join(droppedFolder, "oto.ini"), "w")
+oto_file = open(os.path.join(dropped_folder, "oto.ini"), "w")
 oto_lines = [f'{line["filename"]}.wav={line["alias"]},{line["offset"]},{line["fixed"]},{line["cutoff"]},{line["preutterance"]},{line["overlap"]}\n' for line in oto_lines]
 oto_file.writelines(oto_lines)
 oto_file.close()
-print('Generated OTO has been saved.')
-input('Press enter to close.')
-exit()
+
+if not (preset['load_preset']):
+    print('Generated OTO has been saved.')
+    input('Press enter to close.')
