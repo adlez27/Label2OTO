@@ -9,9 +9,11 @@ Each wav file in the voicebank has one corresponding label file, with the same n
     - "-": Region, spanning the stable/stretchable part of the phoneme. For stop/non-continuous consonants, this should span the silent gap before the consonant sound.
 - "end": Single point, at the end of the final phoneme
 
+If you want to use "-" or "end" as phonemes, you can specify other text as the stretch and end labels in the reclist settings.
+
 ## Settings
 JSON files containing the settings for a given reclist. See existing files in `settings` for examples.
-- Aliases: Which alias formats to include, and the spacer character used between phonemes
+- Aliases: Which alias formats to include, spacer characters used between phonemes, and stretch/end label text
 - Consonants and vowels: Recognized phonemes, to validate labels and adjust OTO values
 - Delete: List of regex strings, to identify aliases that should be deleted from the OTO
 - Replace: Dictionary of regex find/replace for modifying aliases

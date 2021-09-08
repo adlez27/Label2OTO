@@ -37,6 +37,12 @@ def set_settings():
 
     with open("settings\\" + selected_list, encoding='utf-8') as file:
         preset['settings'] = json.loads(file.read())
+
+    if 'stretch' not in preset['settings']['aliases']:
+        preset['settings']['aliases']['stretch'] = '-'
+    if 'end' not in preset['settings']['aliases']: 
+        preset['settings']['aliases']['end'] = 'end'
+
     preset['load_preset'] = False
 
 def set_overlap():
@@ -83,6 +89,11 @@ try:
             print('Loading from settings for', preset['settings'] + ".")
             with open("settings\\" + preset['settings'] + ".json", encoding='utf-8') as file:
                 preset['settings'] = json.loads(file.read())
+
+            if 'stretch' not in preset['settings']['aliases']:
+                preset['settings']['aliases']['stretch'] = '-'
+            if 'end' not in preset['settings']['aliases']: 
+                preset['settings']['aliases']['end'] = 'end'
         else:
             print('Could not find settings for', preset['settings'] + ".")
             set_settings()
@@ -128,19 +139,24 @@ for file in labels:
                     exit()
 
                 next = file_data[marker_index + 1]
-                if next['text'] == '-':
-                    phonemes.append({
-                        "text": marker["text"],
-                        "start": int(float(marker["start"]) * 1000),
-                        "stretch start": int(float(next["start"]) * 1000),
-                        "stretch end": int(float(next["end"]) * 1000)
-                    })
-                    marker_index = marker_index + 1
+                if next['text'] == preset['settings']['aliases']['stretch']:
+                    if marker_index + 2 >= len(file_data):
+                        print('Missing end marker.')
+                        input('Press enter to close.')
+                        exit()
+                    else:
+                        phonemes.append({
+                            "text": marker["text"],
+                            "start": int(float(marker["start"]) * 1000),
+                            "stretch start": int(float(next["start"]) * 1000),
+                            "stretch end": int(float(next["end"]) * 1000)
+                        })
+                        marker_index = marker_index + 1
                 else:
                     print(f'Phoneme lacks stretch marker: {marker["text"]}')
                     input('Press enter to close.')
                     exit()
-            elif marker['text'] == 'end':
+            elif marker['text'] == preset['settings']['aliases']['end']:
                 phonemes.append({
                     "text": "end",
                     "start": int(float(marker["start"])* 1000)
