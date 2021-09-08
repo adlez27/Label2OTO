@@ -191,6 +191,29 @@ for file in labels:
             preutterance = preset['init_preutt']
             adjusted_overlap = int(preset['init_preutt'] / 2)
         elif current['text'] in preset['settings']['vowels']:
+            if preset['settings']['aliases']['v']:
+                # solo vowel
+                solo_preutt = 0
+                solo_overlap = 0
+
+                length = current['stretch end'] - current['stretch start']
+                if length < preset['overlap']:
+                    solo_preutt = int(length / 2)
+                    solo_overlap = length
+                else:
+                    solo_preutt = int(preset['overlap'] / 2)
+                    solo_overlap = preset['overlap']
+
+                oto_lines.append({
+                    "filename": filename,
+                    "alias": current['text'],
+                    "offset": current['stretch start'],
+                    "fixed": 0,
+                    "cutoff": current['stretch start'] - current['stretch end'],
+                    "preutterance": solo_preutt,
+                    "overlap": solo_overlap
+                })
+
             if next['start'] - current['stretch start'] < preset['overlap'] * 2:
                 preutterance = next['start'] - current['stretch start']
                 adjusted_overlap = int(preutterance/2)
