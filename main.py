@@ -114,7 +114,7 @@ for file in labels:
     filename = Path(file).stem
     print(f'Parsing line: {filename}')
     phonemes = [{"text": "start"}]
-    with open(file, mode='r') as csv_file:
+    with open(file, mode='r', encoding="utf-8") as csv_file:
         file_data = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
         file_data = list(file_data)
 
@@ -179,6 +179,10 @@ for file in labels:
                 preutterance = next['start'] - current['stretch start']
                 adjusted_overlap = int(preutterance/2)
                 offset = current['stretch start']
+            elif next['start'] - current['stretch end'] > preset['overlap']:
+                preutterance = (next['start'] - current['stretch end']) + preset['overlap']
+                adjusted_overlap = preset['overlap']
+                offset = current['stretch end'] - preset['overlap']
             else:
                 preutterance = preset['overlap'] * 2
                 adjusted_overlap = preset['overlap']
