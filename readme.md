@@ -13,10 +13,12 @@ If you want to use "-" or "end" as phonemes, you can specify other text as the s
 
 ## Settings
 JSON files containing the settings for a given reclist. See existing files in `settings` for examples.
-- Aliases: Which alias formats to include, spacer characters used between phonemes, and stretch/end label text
-- Consonants and vowels: Recognized phonemes, to validate labels and adjust OTO values
-- Delete: List of regex strings, to identify aliases that should be deleted from the OTO
-- Replace: Dictionary of regex find/replace for modifying aliases
+- "stretch": (optional) Alternative text for stretch label
+- "end": (optional) Alternative text for end label
+- "aliases": Which alias formats to include, spacer characters used between phonemes
+- "consonants" and vowels: Recognized phonemes, to validate labels and adjust OTO values
+- "delete": List of regex strings, to identify aliases that should be deleted from the OTO
+- "replace": Dictionary of regex find/replace for modifying aliases
 
 ## Preset
 You can optionally create a file named `preset.json` in the voicebank folder to preselect options while generating the OTO. You can include as many or as few of these preset options as you want in the file, and will be prompted for any that are missing. See `example-preset.json` for an example.
