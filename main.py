@@ -114,7 +114,7 @@ try:
 except IOError:
     set_settings()
     set_overlap()
-    set_handle_dupes()
+    set_handle_dupes(False)
 
 labels = [os.path.join(dropped_folder, file) for file in os.listdir(dropped_folder)]
 labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
