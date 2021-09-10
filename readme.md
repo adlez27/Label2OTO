@@ -1,9 +1,15 @@
 # Label2OTO
-This script converts Audacity label files to oto.ini for UTAU. Drag and drop a prepared voicebank folder onto main.py to run.
+This script converts embedded wav markers or Audacity label files to oto.ini for UTAU. Drag and drop a prepared voicebank folder onto main.py to run.
 
 ## Labels
-Each wav file in the voicebank has one corresponding label file, with the same name as the wav file.
+The script first attempts to read markers embedded in the wav files, created using [ocenaudio](https://www.ocenaudio.com/). These embedded markers are in the form of XML data slapped onto the end of the WAV file rather than the more standard cue points.
 
+If invalid markers or no markers are found, it will look for a backup text file with the same name as the wav file. Correctly formatted label files can be created with:
+- Audacity
+- DarkAudacity
+- Other Audacity forks that still use the same format for label files
+
+The required markers are:
 - For each phoneme
     - phoneme: Single point, at the start of the phoneme. Used for preutterance when it's the second phoneme in an alias.
     - (no text): Region, spanning the stable/stretchable part of the phoneme. For stop/non-continuous consonants, this should span the silent gap before the consonant sound.
