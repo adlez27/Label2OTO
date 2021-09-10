@@ -6,6 +6,9 @@ import json
 import csv
 import re
 
+os.system('pip install -r requirements.txt')
+import xmltodict
+
 try:
     dropped_folder = sys.argv[1]
     if (not os.path.isdir(dropped_folder)):
@@ -111,63 +114,132 @@ except IOError:
     set_overlap()
     set_handle_dupes(False)
 
+# read from audacity labels
+def read_label_file(file):
+    filename = Path(file).stem
+    phonemes = [{"text": "start"}]
+
+
+    file_data = 0
+    try:
+        csv.register_dialect('tsv', delimiter='\t')
+        with open(file, mode='r', encoding="utf-8") as csv_file:
+            file_data = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
+            file_data = list(file_data)
+        print('Reading label file as backup.')
+    except:
+        print('Could not find backup label file.')
+        input("Press enter to close.")
+        exit()
+
+
+    marker_index = 0
+    while marker_index < len(file_data):
+        marker = file_data[marker_index]
+        if marker['text'] in preset['settings']['vowels'] or marker['text'] in preset['settings']['consonants']:
+            if marker_index + 1 >= len(file_data):
+                print('Missing end marker.')
+                input('Press enter to close.')
+                exit()
+
+            next = file_data[marker_index + 1]
+            if next['text'] == '' and next['start'] != next['end']:
+                if marker_index + 2 >= len(file_data):
+                    print('Missing end marker.')
+                    input('Press enter to close.')
+                    exit()
+                else:
+                    phonemes.append({
+                        "text": marker["text"],
+                        "start": int(float(marker["start"]) * 1000),
+                        "stretch start": int(float(next["start"]) * 1000),
+                        "stretch end": int(float(next["end"]) * 1000)
+                    })
+                    marker_index = marker_index + 1
+            else:
+                print(f'Phoneme lacks stretch marker: {marker["text"]}')
+                input('Press enter to close.')
+                exit()
+        elif marker_index+1 == len(file_data) and marker['start'] == marker['end'] and marker['text'] == '':
+            phonemes.append({
+                "text": "end",
+                "start": int(float(marker["start"])* 1000)
+            })
+        else:
+            print(f'Invalid phoneme: {marker["text"]}')
+            input('Press enter to close.')
+            exit()
+        marker_index = marker_index + 1
+    return phonemes
+
 phonemes = {}
 
 wavs = [os.path.join(dropped_folder, file) for file in os.listdir(dropped_folder)]
 wavs = [file for file in wavs if os.path.splitext(file)[1] == ".wav"]
 
 for wav in wavs:
-    pass
+    filename = Path(wav).stem
+    print(f'Parsing {filename}.wav')
+    label = os.path.splitext(wav)[0] + ".txt"
 
-# read from audacity labels
-csv.register_dialect('tsv', delimiter='\t')
-labels = [os.path.join(dropped_folder, file) for file in os.listdir(dropped_folder)]
-labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
-for file in labels:
-    filename = Path(file).stem
-    phonemes[filename] = [{"text": "start"}]
-    print(f'Parsing line: {filename}')
-    with open(file, mode='r', encoding="utf-8") as csv_file:
-        file_data = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
-        file_data = list(file_data)
+    file_contents = ''
+    with open(wav, 'rb') as file:
+        try:
+            file_contents = file.read().split(b'_PMX')[1]
+        except:
+            print('No embedded markers found.')
+            phonemes[filename] = read_label_file(label)
+            continue
 
-        marker_index = 0
-        while marker_index < len(file_data):
-            marker = file_data[marker_index]
-            if marker['text'] in preset['settings']['vowels'] or marker['text'] in preset['settings']['consonants']:
-                if marker_index + 1 >= len(file_data):
+    file_contents = file_contents[file_contents.index(b'<'):file_contents.rindex(b'>')+1]
+    namespaces = {"rdf": None, "xmp": None, "xmpDM": None}
+    markers = xmltodict.parse(file_contents, namespaces=namespaces)['x:xmpmeta']['RDF']['Description']['Tracks']['Bag']['li']['markers']['Seq']['li']
+    
+    valid = True
+    file_phonemes = [{"text": "start"}]
+    marker_index = 0
+    while marker_index < len(markers):
+        marker = markers[marker_index]
+        if marker_index+1 == len(markers) and 'duration' not in marker and marker['name'] is None:
+            file_phonemes.append({
+                "text": "end",
+                "start": int(int(marker["startTime"]) / 44.1)
+            })
+        elif marker['name'] in preset['settings']['vowels'] or marker['name'] in preset['settings']['consonants']:
+            if marker_index + 1 >= len(markers):
+                print('Missing end marker.')
+                valid = False
+                break
+
+            next = markers[marker_index + 1]
+            if next['name'] is None and 'duration' in next:
+                if marker_index + 2 >= len(markers):
                     print('Missing end marker.')
-                    input('Press enter to close.')
-                    exit()
-
-                next = file_data[marker_index + 1]
-                if next['text'] == '' and next['start'] != next['end']:
-                    if marker_index + 2 >= len(file_data):
-                        print('Missing end marker.')
-                        input('Press enter to close.')
-                        exit()
-                    else:
-                        phonemes[filename].append({
-                            "text": marker["text"],
-                            "start": int(float(marker["start"]) * 1000),
-                            "stretch start": int(float(next["start"]) * 1000),
-                            "stretch end": int(float(next["end"]) * 1000)
-                        })
-                        marker_index = marker_index + 1
+                    valid = False
+                    break
                 else:
-                    print(f'Phoneme lacks stretch marker: {marker["text"]}')
-                    input('Press enter to close.')
-                    exit()
-            elif marker_index+1 == len(file_data) and marker['start'] == marker['end'] and marker['text'] == '':
-                phonemes[filename].append({
-                    "text": "end",
-                    "start": int(float(marker["start"])* 1000)
-                })
+                    file_phonemes.append({
+                        "text": marker["name"],
+                        "start": int(int(marker["startTime"]) / 44.1),
+                        "stretch start": int(int(next["startTime"]) / 44.1),
+                        "stretch end": int(int(next["startTime"]) / 44.1) + int(int(next["duration"]) / 44.1)
+                    })
+                    marker_index = marker_index + 1
             else:
-                print(f'Invalid phoneme: {marker["text"]}')
-                input('Press enter to close.')
-                exit()
-            marker_index = marker_index + 1
+                print(f'Phoneme lacks stretch marker: {marker["name"]}')
+                valid = False
+                break
+        else:
+            print(f'Invalid phoneme: {marker["name"]}')
+            valid = False
+            break
+        marker_index = marker_index + 1
+    
+    if valid:
+        phonemes[filename] = file_phonemes
+    else:
+        phonemes[filename] = read_label_file(label)
+        # continue
 
 oto_lines = []
 for filename, filedata in phonemes.items():
