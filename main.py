@@ -3,6 +3,7 @@ import os
 from genericpath import isdir
 from pathlib import Path
 import json
+from wave_markers import wavelib
 import csv
 import re
 
@@ -119,12 +120,31 @@ except IOError:
 labels = [os.path.join(dropped_folder, file) for file in os.listdir(dropped_folder)]
 labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
 
+phonemes = [{"text": "start"}]
+
+wavs = [os.path.join(dropped_folder, file) for file in os.listdir(dropped_folder)]
+wavs = [file for file in wavs if os.path.splitext(file)[1] == ".wav"]
+
+import warnings
+with warnings.catch_warnings():
+    # warnings.filterwarnings("ignore")
+
+    for wav in wavs:
+        w = wavelib.wave.Wave(wav, readmarkers=True, readmarkerlabels=True, readmarkerslist=True,
+                readloops=True, readpitch=False, normalized=False, forcestereo=False)
+
+        print('file', wav)
+        print('markers', len(w.markers))
+        print('marker labels', len(w.markerlabels))
+        print('markers list', len(w.markerslist))
+        print('loops', len(w.loops))
+
+# read from audacity labels
 csv.register_dialect('tsv', delimiter='\t')
 oto_lines = []
 for file in labels:
     filename = Path(file).stem
     print(f'Parsing line: {filename}')
-    phonemes = [{"text": "start"}]
     with open(file, mode='r', encoding="utf-8") as csv_file:
         file_data = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
         file_data = list(file_data)
@@ -167,7 +187,8 @@ for file in labels:
                 exit()
             marker_index = marker_index + 1
 
-    for current, next in zip(phonemes, phonemes[1:]):
+# generate oto
+for current, next in zip(phonemes, phonemes[1:]):
         alias = ""
         offset = 0
         fixed = 0
