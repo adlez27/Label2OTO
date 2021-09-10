@@ -2,11 +2,7 @@
 This script converts embedded wav markers or Audacity label files to oto.ini for UTAU. Drag and drop a prepared voicebank folder onto main.py to run.
 
 ## Labels
-The script first attempts to read markers embedded in the wav files. These can be created with:
-- ocenaudio
-- Image-Line Edison
-- Reaper
-- Adobe Audition (untested)
+The script first attempts to read markers embedded in the wav files, created using [ocenaudio](https://www.ocenaudio.com/).
 
 If invalid markers or no markers are found, it will look for a text file with the same name as the wav file. Correctly formatted label files can be created with:
 - Audacity
