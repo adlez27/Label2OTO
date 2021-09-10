@@ -6,7 +6,7 @@ import json
 import csv
 import re
 
-os.system('pip install -r requirements.txt')
+os.system(f'pip install -r {os.path.join(os.path.dirname(sys.argv[0]),"requirements.txt")}')
 import xmltodict
 
 try:
@@ -30,15 +30,17 @@ preset = {
 
 def set_settings():
     print('Select reclist')
-    lists = os.listdir("settings")
+
+    lists = [file for file in os.listdir(os.path.join(os.path.dirname(sys.argv[0]),"settings")) if os.path.splitext(file)[1] == ".json"]
     for i, reclist in enumerate(lists):
-        print(str(i+1) + ". " + reclist[:-5])
+        print(str(i+1) + ". " + Path(reclist).stem)
+
     list_index = 0
     while not (list_index <= len(lists) and list_index > 0):
         list_index = int(input(": "))
     selected_list = lists[list_index - 1]
 
-    with open("settings\\" + selected_list, encoding='utf-8') as file:
+    with open(os.path.join(os.path.dirname(sys.argv[0]), "settings", selected_list), encoding='utf-8') as file:
         preset['settings'] = json.loads(file.read())
 
     if 'stretch' not in preset['settings']['aliases']:
@@ -86,11 +88,10 @@ try:
     preset['load_preset'] = True
 
     if type(preset['settings']) is str:
-        lists = os.listdir("settings")
-        lists = [x[:-5] for x in lists]
+        lists = [Path(file).stem for file in os.listdir(os.path.join(os.path.dirname(sys.argv[0]),"settings")) if os.path.splitext(file)[1] == ".json"]
         if preset['settings'] in lists:
             print('Loading from settings for', preset['settings'] + ".")
-            with open("settings\\" + preset['settings'] + ".json", encoding='utf-8') as file:
+            with open(os.path.join(os.path.dirname(sys.argv[0]), "settings" , f'{preset["settings"]}.json'), encoding='utf-8') as file:
                 preset['settings'] = json.loads(file.read())
         else:
             print('Could not find settings for', preset['settings'] + ".")
@@ -120,7 +121,7 @@ def read_label_file(file):
     phonemes = [{"text": "start"}]
 
 
-    file_data = 0
+    file_data = []
     try:
         csv.register_dialect('tsv', delimiter='\t')
         with open(file, mode='r', encoding="utf-8") as csv_file:
@@ -128,10 +129,7 @@ def read_label_file(file):
             file_data = list(file_data)
         print('Reading label file as backup.')
     except:
-        print('Could not find backup label file.')
-        input("Press enter to close.")
-        exit()
-
+        print('Could not find backup label file. Skipping.')
 
     marker_index = 0
     while marker_index < len(file_data):
