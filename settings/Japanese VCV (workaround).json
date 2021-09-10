@@ -1,6 +1,6 @@
 {
     "aliases": {
-        "v": true,
+        "v": false,
         "-v": {
             "include": false,
             "spacer": " "

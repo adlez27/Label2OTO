@@ -6,15 +6,13 @@ Each wav file in the voicebank has one corresponding label file, with the same n
 
 - For each phoneme
     - phoneme: Single point, at the start of the phoneme. Used for preutterance when it's the second phoneme in an alias.
-    - "-": Region, spanning the stable/stretchable part of the phoneme. For stop/non-continuous consonants, this should span the silent gap before the consonant sound.
-- "end": Single point, at the end of the final phoneme
+    - (no text): Region, spanning the stable/stretchable part of the phoneme. For stop/non-continuous consonants, this should span the silent gap before the consonant sound.
+- (no text): Single point, at the end of the final phoneme
 
 If you want to use "-" or "end" as phonemes, you can specify other text as the stretch and end labels in the reclist settings.
 
 ## Settings
 JSON files containing the settings for a given reclist. See existing files in `settings` for examples.
-- "stretch": (optional) Alternative text for stretch label
-- "end": (optional) Alternative text for end label
 - "aliases": Which alias formats to include, spacer characters used between phonemes
 - "consonants" and vowels: Recognized phonemes, to validate labels and adjust OTO values
 - "delete": List of regex strings, to identify aliases that should be deleted from the OTO

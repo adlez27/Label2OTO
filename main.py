@@ -89,11 +89,6 @@ try:
             print('Loading from settings for', preset['settings'] + ".")
             with open("settings\\" + preset['settings'] + ".json", encoding='utf-8') as file:
                 preset['settings'] = json.loads(file.read())
-
-            if 'stretch' not in preset['settings']['aliases']:
-                preset['settings']['aliases']['stretch'] = '-'
-            if 'end' not in preset['settings']['aliases']: 
-                preset['settings']['aliases']['end'] = 'end'
         else:
             print('Could not find settings for', preset['settings'] + ".")
             set_settings()
@@ -116,15 +111,15 @@ except IOError:
     set_overlap()
     set_handle_dupes(False)
 
-labels = [os.path.join(dropped_folder, file) for file in os.listdir(dropped_folder)]
-labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
+phonemes = {}
 
 csv.register_dialect('tsv', delimiter='\t')
-oto_lines = []
+labels = [os.path.join(dropped_folder, file) for file in os.listdir(dropped_folder)]
+labels = [file for file in labels if os.path.splitext(file)[1] == ".txt"]
 for file in labels:
     filename = Path(file).stem
+    phonemes[filename] = [{"text": "start"}]
     print(f'Parsing line: {filename}')
-    phonemes = [{"text": "start"}]
     with open(file, mode='r', encoding="utf-8") as csv_file:
         file_data = csv.DictReader(csv_file, dialect='tsv', fieldnames=["start", "end", "text"])
         file_data = list(file_data)
@@ -139,13 +134,13 @@ for file in labels:
                     exit()
 
                 next = file_data[marker_index + 1]
-                if next['text'] == preset['settings']['aliases']['stretch']:
+                if next['text'] == '' and next['start'] != next['end']:
                     if marker_index + 2 >= len(file_data):
                         print('Missing end marker.')
                         input('Press enter to close.')
                         exit()
                     else:
-                        phonemes.append({
+                        phonemes[filename].append({
                             "text": marker["text"],
                             "start": int(float(marker["start"]) * 1000),
                             "stretch start": int(float(next["start"]) * 1000),
@@ -156,8 +151,8 @@ for file in labels:
                     print(f'Phoneme lacks stretch marker: {marker["text"]}')
                     input('Press enter to close.')
                     exit()
-            elif marker['text'] == preset['settings']['aliases']['end']:
-                phonemes.append({
+            elif marker_index+1 == len(file_data) and marker['start'] == marker['end'] and marker['text'] == '':
+                phonemes[filename].append({
                     "text": "end",
                     "start": int(float(marker["start"])* 1000)
                 })
@@ -167,7 +162,9 @@ for file in labels:
                 exit()
             marker_index = marker_index + 1
 
-    for current, next in zip(phonemes, phonemes[1:]):
+oto_lines = []
+for filename, filedata in phonemes.items():
+    for current, next in zip(filedata, filedata[1:]):
         alias = ""
         offset = 0
         fixed = 0
