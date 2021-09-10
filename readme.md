@@ -9,8 +9,6 @@ Each wav file in the voicebank has one corresponding label file, with the same n
     - (no text): Region, spanning the stable/stretchable part of the phoneme. For stop/non-continuous consonants, this should span the silent gap before the consonant sound.
 - (no text): Single point, at the end of the final phoneme
 
-If you want to use "-" or "end" as phonemes, you can specify other text as the stretch and end labels in the reclist settings.
-
 ## Settings
 JSON files containing the settings for a given reclist. See existing files in `settings` for examples.
 - "aliases": Which alias formats to include, spacer characters used between phonemes
