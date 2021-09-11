@@ -1,4 +1,5 @@
 import sys
+import subprocess
 import os
 from genericpath import isdir
 from pathlib import Path
@@ -6,8 +7,12 @@ import json
 import csv
 import re
 
-os.system(f'pip install -r {os.path.join(os.path.dirname(sys.argv[0]),"requirements.txt")}')
-import xmltodict
+try:
+    import xmltodict
+except:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "xmltodict"])
+finally:
+    import xmltodict
 
 try:
     dropped_folder = sys.argv[1]
