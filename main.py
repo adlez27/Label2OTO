@@ -125,7 +125,6 @@ def read_label_file(file):
     filename = Path(file).stem
     phonemes = [{"text": "start"}]
 
-
     file_data = []
     try:
         csv.register_dialect('tsv', delimiter='\t')
@@ -191,7 +190,10 @@ for wav in wavs:
             file_contents = file.read().split(b'_PMX')[1]
         except:
             print('No embedded markers found.')
-            phonemes[filename] = read_label_file(label)
+            phonemes[filename] = {
+                "embed": False,
+                "phonemes": read_label_file(label)
+            }
             continue
 
     file_contents = file_contents[file_contents.index(b'<'):file_contents.rindex(b'>')+1]
@@ -239,14 +241,19 @@ for wav in wavs:
         marker_index = marker_index + 1
     
     if valid:
-        phonemes[filename] = file_phonemes
+        phonemes[filename] = {
+            "embed": True,
+            "phonemes": file_phonemes
+        }
     else:
-        phonemes[filename] = read_label_file(label)
-        # continue
+        phonemes[filename] = {
+            "embed": False,
+            "phonemes": read_label_file(label)
+        }
 
 oto_lines = []
 for filename, filedata in phonemes.items():
-    for current, next in zip(filedata, filedata[1:]):
+    for current, next in zip(filedata['phonemes'], filedata['phonemes'][1:]):
         alias = ""
         offset = 0
         fixed = 0
@@ -310,6 +317,8 @@ for filename, filedata in phonemes.items():
                 # V-
                 alias = current['text'] + preset['settings']['aliases']['v-']['spacer'] +  "-"
                 fixed = preutterance + 10
+                if filedata['embed']:
+                    cutoff = 80
                 if not preset['settings']['aliases']['v-']['include']:
                     continue
             else:
@@ -331,7 +340,9 @@ for filename, filedata in phonemes.items():
             if next['text'] == 'end':
                 # C-
                 alias = current['text'] + preset['settings']['aliases']['c-']['spacer'] + "-"
-                fixed = next['start'] - offset + int(preset['init_preutt'] / 2)                
+                fixed = next['start'] - offset + int(preset['init_preutt'] / 2)
+                if filedata['embed']:
+                    cutoff = 80                
                 if not preset['settings']['aliases']['c-']['include']:
                     continue
             else:
