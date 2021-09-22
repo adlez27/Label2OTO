@@ -134,6 +134,7 @@ def read_label_file(file):
         print('Reading label file as backup.')
     except:
         print('Could not find backup label file. Skipping.')
+        preset['load_preset'] = False
 
     marker_index = 0
     while marker_index < len(file_data):
