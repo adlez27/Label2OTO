@@ -133,7 +133,7 @@ def read_label_file(file):
             file_data = list(file_data)
         print('Reading label file as backup.')
     except:
-        print('Could not find backup label file. Skipping.')
+        print('Could not find backup label file. Skipping.\n')
         preset['load_preset'] = False
 
     marker_index = 0
