@@ -199,7 +199,15 @@ for wav in wavs:
 
     file_contents = file_contents[file_contents.index(b'<'):file_contents.rindex(b'>')+1]
     namespaces = {"rdf": None, "xmp": None, "xmpDM": None}
-    markers = xmltodict.parse(file_contents, namespaces=namespaces)['x:xmpmeta']['RDF']['Description']['Tracks']['Bag']['li']['markers']['Seq']['li']
+    try:
+        markers = xmltodict.parse(file_contents, namespaces=namespaces)['x:xmpmeta']['RDF']['Description']['Tracks']['Bag']['li']['markers']['Seq']['li']
+    except:
+        print('Could not read embedded markers.')
+        phonemes[filename] = {
+            "embed": False,
+            "phonemes": read_label_file(label)
+        }
+        continue
     
     valid = True
     file_phonemes = [{"text": "start"}]
