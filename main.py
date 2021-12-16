@@ -85,7 +85,7 @@ def set_handle_dupes(handle):
     preset['load_preset'] = False
 
 try:
-    with open(os.path.join(dropped_folder, "preset.json")) as file:
+    with open(os.path.join(dropped_folder, "preset.json"), encoding='utf-8') as file:
         file_preset = json.loads(file.read())
         for key, value in file_preset.items():
             preset[key] = value
