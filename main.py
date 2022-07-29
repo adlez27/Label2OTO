@@ -226,7 +226,7 @@ for wav in wavs:
                 break
 
             next = markers[marker_index + 1]
-            if next['name'] is None and 'duration' in next:
+            if (next['name'] is None or next['name'] == 'New Region') and 'duration' in next:
                 if marker_index + 2 >= len(markers):
                     print('Missing end marker.')
                     valid = False
